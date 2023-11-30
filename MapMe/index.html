@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MapMeIndia</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    <style type="text/css">
+      html,
+      body {
+        background-color: transparent;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+     .gm-iv-address {
+      display: none;
+    }
+      button {
+        /* top:95%;
+        width: 90px;
+        height: 45px; */
+        color: black;
+        margin-left:18%;
+        background-color:  white;
+        font-size: 35px;
+        font-weight: bold;
+        border: none;
+        border-radius: 15px;
+        padding: 18px;
+        text-align: center;
+      }
+
+      img {
+        padding-top: 10px;
+      }
+
+      #street-view {
+        height: 100%;
+        /* Google inverts the colours if you don't have any billing set up.
+        We can go around this by adding a counter invert filter on top of the street view */
+        filter: invert(1);  
+      }
+
+      #floating-panel {
+        position: absolute;
+        top: 80%;
+        left: 58%;
+        transform: translateX(-50%);
+        z-index: 5;
+        /*background-color: transparent;
+        padding: 2px;
+        text-align: center;
+        font-family: "Roboto", "sans-serif";
+        line-height: 30px;
+        padding-left: 10px;
+        width: 20%;
+        height: 20%; */
+      }
+ 
+      #floating-panel {
+        margin-left: -100px;
+      }    
+
+      #score {
+        background-color: white; /* Add this line to give the current score a white background */
+        padding: 0px;
+        border-radius: 5px;
+        margin:5px 0;
+     }
+     #kala{
+            background-color: none;
+            color: black;
+            font-weight: bold;
+            position: absolute;
+            top: 91%;
+            left: 53%;
+            transform: translateX(-50%);
+            z-index: 5;
+     }
+    </style>
+    <script>
+      // Set the starting score of the player to 0
+      let score = 0
+      let incorrect=0
+      let panorama
+
+      // Set different places where the player will be spawned
+      var places = [
+          [{ lat: 28.656230,  lng: 77.240892 }, {country: ['red fort']}], //Red Fort, Delhi,India 
+          [{ lat: 28.524394,  lng: 77.185824 }, {country: ['qutub minar']}], //qutub minar, delhi, india 
+          [{ lat: 17.3614808,  lng: 78.474646}, {country: ['charminar']}], //charminar, hyderabad, telangana 
+          [{ lat: 22.584574,  lng: 88.349250 }, {country: ['howrah bridge']}], //howrah bridge, Kolkata, Westbengal
+          [{ lat: 28.553779,  lng: 77.259968 }, {country: ['lotus temple']}], // lotus temple, Delhi, India 
+          [{ lat: 19.887824,  lng: 86.096003 }, {country: ['konark sun temple']}], // konark sun temple, Konark, Odisha
+          [{ lat: 17.3827634,  lng: 78.4013168 }, {country: ['golconda','golkonda','golconda fort','golkonda fort']}],// golconda fort, hyderbad, telangana 
+          [{ lat: 12.3038763,  lng: 76.6553298 }, {country: ['mysore palace']}], //Mysore palace, mysore, karnataka 
+          [{ lat: 18.2807479,  lng: 83.0397234 }, {country: ['borra caves']}], //borra caves, andra pradesh, india 
+          [{ lat: 10.7831087,  lng: 79.1322846 }, {country:  ['brihadeesvara temple', 'brihadeshwara temple', 'brihadishvara temple', 'brihadisvara temple', 'brihadeshvara temple', 'brihatisvara temple']}], //brihadishvara temple, tanjavur, tamilnadu
+          [{ lat: 27.172154,  lng: 78.0422459 }, {country: ['taj mahal']}], //taj mahal, agra, india 
+          [{ lat: 26.9236207,  lng: 75.8270958 }, {country: ['hawa mahal']}], //hawa mahal, jaipur,rajasthan
+          [{ lat: 31.620115,  lng: 74.8762896 }, {country: ['golden temple']}], //golden temple, amristar, india 
+          [{ lat: 26.9248047,  lng: 75.8239136 }, {country: ['janter manter']}], //janter manter, jaipur, rajasthan 
+          [{ lat: 15.335501,  lng: 76.4599524 }, {country: ['humpi','humpee']}], //humpi, karnataka, india hampi:15.335501,76.4599524
+          [{ lat: 22.5455244,  lng: 88.3428836 }, {country: ['victoria memorial']}], //Victoria memorial, kolkata, westbengal 
+          [{ lat: 8.0778074,  lng: 77.5540357}, {country: ['kanyakumari']}], //Kanyakumari, tamilnadu, india 
+          [{ lat: 21.837698,  lng: 73.719841}, {country: ['statue of unity']}], //statue of unity,kevadia, gujarat
+      ]
+        
+      let currentPlace = places[Math.floor(Math.random() * (places.length))]  // Pick a random place to be spawned
+      let coordinates = currentPlace[0] // Get coordinates
+      let country = currentPlace[1].country[0] // Get the name of the country
+
+      // Reload game environment when a round is over
+      let reconfigure = () => { 
+        document.getElementById("score").innerHTML = "Your current score is: " + score;
+        currentPlace = places[Math.floor(Math.random() * (places.length))];
+        coordinates = currentPlace[0];
+        country = currentPlace[1].country[0];
+
+        initialize()
+      }
+
+      // Check if guess is correct and then execute reconfiguring function
+      const guess = () => {
+      var guess = window.prompt("Where are we? ");
+      if (guess == null) {
+        // User pressed cancel
+        return;
+      }
+      if(incorrect == 2){
+            alert("OOPS! GAME OVER!! Incorrect score: 3" +  " Final Score: " + score);
+            restartGame();
+            return;
+      }
+      else if (score == 9) {
+         alert("CONGRATULATIONS!! YOU WON, Final Score: 10");
+         restartGame();
+         score = 0
+      }
+      else{
+        if (currentPlace[1].country.includes(guess)) {
+          score++;
+          alert("Correct! Current Score: " + score + " incorrect: " + incorrect);
+          reconfigure();
+        } else {
+          if(score>0){
+            score--;
+            incorrect++;
+            alert("Correct! Current Score: " + score + " incorrect: " + incorrect);
+          }
+          else{
+            score = 0;
+            incorrect++;
+            alert("Incorrect! Current Score: " + score + " incorrect: " + incorrect);
+            reconfigure();
+          }
+        }
+      }
+    };
+    // Function to restart the game
+    const restartGame = () => {
+    alert("NEW GAME!")
+    score = 0;
+    incorrect = 0;
+    reconfigure();
+  };
+
+      // Set and configure streetview 
+      function initialize() {
+        panorama = new google.maps.StreetViewPanorama(
+          document.getElementById("street-view"),
+          {
+            position: coordinates,
+            pov: { heading: 165, pitch: 0 },
+            zoom: 1,
+          }
+        )
+      }    
+    </script>
+  </head>
+  <body>
+    <!-- The guess panel on top of the street view -->
+    <div id="floating-panel">
+      <!--<img src="https://www.flaticon.com/svg/vstatic/svg/143/143960.svg?token=exp=1618227638~hmac=7f9a52aac37975da7d77fac34c73b8cb" 
+      alt="icon" width="50px" height="50px">-->
+      <h2 id="score"></h2>
+      <button onclick="guess()">Guess!</button>
+    </div>
+
+    <!-- Street view -->
+    <div id="street-view"></div>
+    <div id="kala">
+      <p> VaishnaviJamalpur,EshikaBodramoni,SnehaDwivedi,Sana </p>
+    </div>
+
+    <!-- Async script executes immediately and must be after any DOM elements used in callback. -->
+    <script
+      src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlpwi8TtC94XOfhc0nDkThQ_Tp0MANKHw&callback=initialize&libraries=&v=weekly"
+      async
+    ></script>
+  </body>
+</html>
