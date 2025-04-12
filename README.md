@@ -58,4 +58,4 @@ Check out more of my work on [GitHub](https://github.com/eshika6525)!
 
 ## 📬 Let's Connect
 
-If you’re a recruiter or just curious — feel free to reach out or fork the project!
+If you’re a recruiter or just curious, feel free to explore the project. Appreciate a ⭐ if you find it interesting!
