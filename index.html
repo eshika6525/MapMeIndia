@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MapMeIndia - Guess the Place</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1c1c1c;
+      color: #f0f0f0;
+    }
+
+    #main-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    #map-view {
+      width: 100%;
+      max-width: 800px;
+      height: 450px;
+      border: 3px solid #ff8a65;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(255, 138, 101, 0.5);
+      margin-bottom: 20px;
+      filter: invert(1);
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      background-color: #ff7043;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      margin: 5px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #ff5722;
+    }
+
+    #score-section, #timer {
+      font-size: 18px;
+      margin-top: 10px;
+      color: #e0e0e0;
+    }
+
+    input[type="text"] {
+      padding: 8px;
+      width: 80%;
+      margin-top: 10px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      border: 1px solid #555;
+      background-color: #121212;
+      color: #ffffff;
+    }
+
+    .google-maps-button-container {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div id="main-container">
+  <h2>MapMeIndia 🌌</h2>
+  <div id="map-view"></div>
+  <input type="text" id="location-input" placeholder="Enter location here">
+  <button onclick="submitGuess()">Submit Guess</button>
+  <div id="timer">Timer: 20s</div>
+  <div id="score-section">Score: 0 | Incorrect: 0</div>
+</div>
+
+<script>
+  let places = [
+    { name: "Taj Mahal", lat: 27.1751, lng: 78.0421 },
+    { name: "India Gate", lat: 28.6129, lng: 77.2295},
+    { name: "Charminar", lat: 17.3616, lng: 78.4747 },
+    { name: "Gateway of India", lat: 18.9218, lng: 72.8347},
+    { name: "Mysore Palace", lat: 12.3051, lng: 76.6551},
+    { name: "Victoria Memorial", lat: 22.5448, lng: 88.3426},
+    { name: "Golden Temple", lat: 31.6200, lng: 74.8765},
+    { name: "Hawa Mahal", lat: 26.9239, lng: 75.8267},
+    { name: "Sun Temple", lat: 19.8876, lng: 86.0945},
+    { name: "Statue of Unity", lat: 21.8380, lng: 73.7191}
+  ];
+
+  let currentPlaceIndex = 0;
+  let score = 0;
+  let incorrect = 0;
+  let timeLeft = 20;
+  let countdown;
+  let panorama;
+
+  function initializeView() {
+    const current = places[currentPlaceIndex];
+    panorama = new google.maps.StreetViewPanorama(
+      document.getElementById("map-view"),
+      {
+        position: { lat: current.lat, lng: current.lng },
+        pov: { heading: 100, pitch: 0 },
+        zoom: 1,
+        showRoadLabels: false,
+        linksControl: false,
+        enableCloseButton: false,
+        addressControl: false,
+        panControl: false,
+        zoomControl: false,
+        fullscreenControl: false
+      }
+    );
+  }
+
+  function loadNewLocation() {
+    currentPlaceIndex = Math.floor(Math.random() * places.length);
+    initializeView();
+    startTimer();
+  }
+
+  function startTimer() {
+    timeLeft = 20;
+    document.getElementById("timer").textContent = "Timer: " + timeLeft + "s";
+
+    // Clear any previous intervals to avoid multiple intervals running
+    clearInterval(countdown);
+
+    countdown = setInterval(() => {
+      timeLeft--;
+      document.getElementById("timer").textContent = "Timer: " + timeLeft + "s";
+
+      if (timeLeft <= 0) {
+        clearInterval(countdown); // Stop the timer when it reaches 0
+        submitGuess(true); // Auto-submit on timeout
+      }
+    }, 1000); // Update every 1000ms (1 second)
+  }
+
+  const submitGuess = (isTimeout = false) => {
+    let guess = document.getElementById("location-input").value.trim();
+    console.log("Correct country: ", places[currentPlaceIndex].name);  // Log correct country
+      console.log("User guess: ", guess);  // 
+    
+    if (guess === "" && !isTimeout) {
+      alert("Please enter a guess.");
+      return;
+    }
+    
+    if (incorrect == 3) {
+      alert("OOPS! GAME OVER!! Incorrect score: 3" + " Final Score: " + score);
+      restartGame();
+      return;
+    } else if (score == 10) {
+      alert("CONGRATULATIONS!! YOU WON, Final Score: 10");
+      restartGame();
+    } else {
+      if (places[currentPlaceIndex].name.toLowerCase()===(guess.toLowerCase())) {
+        score++;
+        alert("Correct! Current Score: " + score + " Incorrect: " + incorrect);
+        loadNewLocation();
+      } else {
+        if (score > 0) {
+          score--;
+        }
+        incorrect++;
+        alert("Incorrect! The correct answer was: " + places[currentPlaceIndex].name + ". Current Score: " + score + " Incorrect: " + incorrect);
+        loadNewLocation();
+      }
+    }
+
+    document.getElementById("location-input").value = ''; // Clear input field after guess
+  };
+
+  const restartGame = () => {
+    alert("NEW GAME!");
+    score = 0;
+    incorrect = 0;
+    loadNewLocation();
+  };
+
+  window.onload = loadNewLocation;
+
+</script>
+
+<script async defer
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAlpwi8TtC94XOfhc0nDkThQ_Tp0MANKHw&callback=initializeView">
+</script>
+
+</body>
+</html>
